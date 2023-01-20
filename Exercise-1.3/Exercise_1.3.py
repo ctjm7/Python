@@ -22,9 +22,9 @@ for recipe in recipes_list:
         recipe['difficulty'] = 'Easy'
     elif recipe['cooking_time'] < 10 and len(recipe['ingredients']) >= 4:
         recipe['difficulty'] = 'Medium'
-    elif recipe['cooking_time'] > 10 and len(recipe['ingredients']) < 4:
+    elif recipe['cooking_time'] >= 10 and len(recipe['ingredients']) < 4:
         recipe['difficulty'] = 'Intermediate'
-    elif recipe['cooking_time'] > 10 and len(recipe['ingredients']) >= 4:
+    elif recipe['cooking_time'] >= 10 and len(recipe['ingredients']) >= 4:
         recipe['difficulty'] = 'Hard'
 
 print("*****")
