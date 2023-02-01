@@ -45,6 +45,7 @@ else:
 finally:
     recipes_list = data['recipes_list']
     all_ingredients = data['all_ingredients']
+    recipe_filename.close()
 
 # Asks user for number of recipes they want to enter
 n = int(input("Please specify how many recipes would you like to enter: "))
