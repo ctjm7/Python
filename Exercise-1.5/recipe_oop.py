@@ -14,7 +14,7 @@ class Recipe(object):
         return self.name
 
     def set_cooking_time(self, cooking_time):
-        self.cooking_time = int(cooking_time)
+        self.cooking_time = cooking_time
         self.difficulty = self.calculate_difficulty()
 
     def get_cooking_time(self):
@@ -26,8 +26,7 @@ class Recipe(object):
         self.update_all_ingredients()
 
     def get_ingredients(self):
-        for ingredient in self.ingredients:
-            print(ingredient)
+        return self.ingredients
 
     def calculate_difficulty(self):
         if self.cooking_time < 10 and len(self.ingredients) < 4:
