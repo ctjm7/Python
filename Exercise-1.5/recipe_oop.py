@@ -15,14 +15,12 @@ class Recipe(object):
 
     def set_cooking_time(self, cooking_time):
         self.cooking_time = cooking_time
-        self.difficulty = self.calculate_difficulty()
 
     def get_cooking_time(self):
         return self.cooking_time
 
     def add_ingredients(self, *ingredient):
         self.ingredients = ingredient
-        self.difficulty = self.calculate_difficulty()
         self.update_all_ingredients()
 
     def get_ingredients(self):
