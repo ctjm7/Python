@@ -11,6 +11,14 @@ Base = declarative_base()
 from sqlalchemy import Column
 from sqlalchemy.types import Integer, String
 
+# Creates tables of models defined
+Base.metadata.create_all(engine)
+
+# Creates an object from Session class to make changes to database
+from sqlalchemy.orm import sessionmaker
+Session = sessionmaker(bind=engine)
+session = Session()
+
 # Class that inherits Base and sets table
 class Recipe(Base):
     __tablename__ = 'final_recipes'
@@ -31,55 +39,47 @@ class Recipe(Base):
             '\nIngredients: ' + str(self.ingredients)
         return output
 
-# Creates tables of models defined
-Base.metadata.create_all(engine)
+    # Calculates difficulty level using cooking_time and ingredients
+    def calculate_difficulty(self, cooking_time, ingredients):
+        if cooking_time < 10 and len(ingredients) < 4:
+            self.difficulty = 'Easy'
+        elif cooking_time < 10 and len(ingredients) >= 4:
+            self.difficulty = 'Medium'
+        elif cooking_time >= 10 and len(ingredients) < 4:
+            self.difficulty = 'Intermediate'
+        elif cooking_time >= 10 and len(ingredients) >=4:
+            self.difficulty = 'Hard'
+        return self.difficulty
 
-# Creates an object from Session class to make changes to database
-from sqlalchemy.orm import sessionmaker
-Session = sessionmaker(bind=engine)
-session = Session()
-
-# Calculates difficulty level using cooking_time and ingredients
-def calculate_difficulty(cooking_time, ingredients):
-	if cooking_time < 10 and len(ingredients) < 4:
-		difficulty = 'Easy'
-	elif cooking_time < 10 and len(ingredients) >= 4:
-		difficulty = 'Medium'
-	elif cooking_time >= 10 and len(ingredients) < 4:
-		difficulty = 'Intermediate'
-	elif cooking_time >= 10 and len(ingredients) >=4:
-		difficulty = 'Hard'
-	return difficulty
-
-# Retrieves the ingredeints from Recipe returns it as a list
-def return_ingredients_as_list():
-    recipes_list = session.query(Recipe).all()
-    for recipe in recipes_list:
-        ingredients_list = recipe.ingredients.split(', ')
-        return ingredients_list
+    # Retrieves the ingredeints from Recipe returns it as a list
+    def return_ingredients_as_list(self):
+        recipes_list = session.query(Recipe).all()
+        for recipe in recipes_list:
+            ingredients_list = recipe.ingredients.split(', ')
+            return ingredients_list
 
 # Adds a recipe to the database and calculates difficulty
 def create_recipe():
     name = input('Enter the name of the recipe: ')
-    if len(name) > 50:
-          name = input('Please enter a name less than 50 characters: ')
+    while len(name) > 50:
+        name = input('Please enter a name less than 50 characters: ')
 
     cooking_time = input('Enter the cooking time in minutes: ')
-    if cooking_time.isnumeric() == True:
+    while cooking_time.isnumeric() == True:
         cooking_time = int(cooking_time)
     else:
         cooking_time = input('Please only enter a numerical value for cooking time: ')
 
     ingredients = []
     number_ingredients = input('Enter the number of ingredients you will be adding: ')
-    if number_ingredients.isnumeric() == False:
-          number_ingredients = int(input('Please enter a numerical value for the number of ingredients: '))
+    while number_ingredients.isnumeric() == False:
+        number_ingredients = int(input('Please enter a numerical value for the number of ingredients: '))
     for i in range (int(number_ingredients)):
         ingredient = input('Enter an ingredient: ')
         ingredients.append(ingredient)
     ingredients_str = ', '.join(ingredients)
 
-    difficulty = calculate_difficulty(cooking_time, ingredients)
+    difficulty = Recipe.calculate_difficulty(cooking_time, ingredients)
 
     recipe_entry = Recipe(
          name = name,
@@ -183,13 +183,13 @@ def edit_recipe():
                     elif choice == '2':
                         new_ingredients = input('Enter the new ingredients for the recipe separated by a comma: ')
                         new_ingredients_list = new_ingredients.split(', ')
-                        new_difficulty = calculate_difficulty(recipe_to_edit.cooking_time, new_ingredients_list)
+                        new_difficulty = Recipe.calculate_difficulty(recipe_to_edit.cooking_time, new_ingredients_list)
                         session.query(Recipe).filter(Recipe.id == recipe_id).update({Recipe.ingredients: new_ingredients, Recipe.difficulty: new_difficulty})
                         session.commit()
                         print('Recipe has been updated')
                     elif choice == '3':
                         new_cooking_time = int(input('Enter the new cooking time in minutes: '))
-                        new_difficulty = calculate_difficulty(new_cooking_time, recipe_to_edit.ingredients.split(', '))
+                        new_difficulty = Recipe.calculate_difficulty(new_cooking_time, recipe_to_edit.ingredients.split(', '))
                         session.query(Recipe).filter(Recipe.id == recipe_id).update({Recipe.cooking_time: new_cooking_time, Recipe.difficulty: new_difficulty})
                         session.commit()
                         print('Recipe has been updated')
