@@ -1,21 +1,18 @@
 import pymysql
-pymysql.install_as_MySQLdb()
-
 from sqlalchemy import create_engine
-engine = create_engine("mysql://cf-python:password@localhost/task_database")
-
-from sqlalchemy.ext.declarative import declarative_base
-Base = declarative_base()
-
-# Creates columns and sets data types of integer and string
 from sqlalchemy import Column
 from sqlalchemy.types import Integer, String
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+
+Base = declarative_base()
+pymysql.install_as_MySQLdb()
+engine = create_engine("mysql://cf-python:password@localhost/task_database")
 
 # Creates tables of models defined
 Base.metadata.create_all(engine)
 
 # Creates an object from Session class to make changes to database
-from sqlalchemy.orm import sessionmaker
 Session = sessionmaker(bind=engine)
 session = Session()
 
@@ -65,10 +62,11 @@ def create_recipe():
         name = input('Please enter a name less than 50 characters: ')
 
     cooking_time = input('Enter the cooking time in minutes: ')
-    while cooking_time.isnumeric() == True:
-        cooking_time = int(cooking_time)
+
+    if cooking_time.isnumeric() == False:
+        cooking_time = input('Please enter a number for cooking time in minutes: ')
     else:
-        cooking_time = input('Please only enter a numerical value for cooking time: ')
+        cooking_time = int(cooking_time)
 
     ingredients = []
     number_ingredients = input('Enter the number of ingredients you will be adding: ')
@@ -79,14 +77,15 @@ def create_recipe():
         ingredients.append(ingredient)
     ingredients_str = ', '.join(ingredients)
 
-    difficulty = Recipe.calculate_difficulty(cooking_time, ingredients)
-
     recipe_entry = Recipe(
          name = name,
          cooking_time = cooking_time,
          ingredients = ingredients_str,
-         difficulty = difficulty
+         difficulty = None
 	)
+
+    recipe_entry.calculate_difficulty(cooking_time, ingredients)
+
     session.add(recipe_entry)
     session.commit()
     print('Recipe has been saved')
@@ -161,40 +160,42 @@ def edit_recipe():
     else:
         results = session.query(Recipe).with_entities(Recipe.id, Recipe.name).all()
         print('-'*9)
+        recipe_id_list = []
         for result in results:
-            print('Recipe ID: ' + str(result[0]) + ' -' + result[1])
+            print('Recipe ID: ' + str(result[0]) + ' ' + result[1])
+            recipe_id_list.append(result[0])
         recipe_id = int(input('Enter the recipe id you want to edit: '))
-        for result in results:
-            if result[0] != recipe_id:
-                 return None
-            else:
-                recipe_to_edit = session.query(Recipe).filter(Recipe.id == recipe_id).one()
-                print('\nRecipe to edit')
-                print('--------------')
-                print(recipe_to_edit)
 
-                choice = input('Enter the number of the attribute you want to update\n1. name, 2. ingredients, 3. cooking time: ')
-                if choice.isnumeric() == True:
-                    if choice == '1':
-                        new_name = input('Enter the new name of the recipe: ')
-                        session.query(Recipe).filter(Recipe.id == recipe_id).update({Recipe.name: new_name})
-                        session.commit()
-                        print('Recipe has been updated')
-                    elif choice == '2':
-                        new_ingredients = input('Enter the new ingredients for the recipe separated by a comma: ')
-                        new_ingredients_list = new_ingredients.split(', ')
-                        new_difficulty = Recipe.calculate_difficulty(recipe_to_edit.cooking_time, new_ingredients_list)
-                        session.query(Recipe).filter(Recipe.id == recipe_id).update({Recipe.ingredients: new_ingredients, Recipe.difficulty: new_difficulty})
-                        session.commit()
-                        print('Recipe has been updated')
-                    elif choice == '3':
-                        new_cooking_time = int(input('Enter the new cooking time in minutes: '))
-                        new_difficulty = Recipe.calculate_difficulty(new_cooking_time, recipe_to_edit.ingredients.split(', '))
-                        session.query(Recipe).filter(Recipe.id == recipe_id).update({Recipe.cooking_time: new_cooking_time, Recipe.difficulty: new_difficulty})
-                        session.commit()
-                        print('Recipe has been updated')
-                else:
-                    print('You need to enter a number from 1 to 3')
+        if recipe_id not in recipe_id_list:
+            return None
+        else:
+            recipe_to_edit = session.query(Recipe).filter(Recipe.id == recipe_id).one()
+            print('\nRecipe to edit')
+            print('--------------')
+            print(recipe_to_edit)
+
+            choice = input('Enter the number of the attribute you want to update\n1. name, 2. ingredients, 3. cooking time: ')
+            if choice.isnumeric() == True:
+                if choice == '1':
+                    new_name = input('Enter the new name of the recipe: ')
+                    session.query(Recipe).filter(Recipe.id == recipe_id).update({Recipe.name: new_name})
+                    session.commit()
+                    print('Recipe has been updated')
+                elif choice == '2':
+                    new_ingredients = input('Enter the new ingredients for the recipe separated by a comma: ')
+                    new_ingredients_list = new_ingredients.split(', ')
+                    new_difficulty = recipe_to_edit.calculate_difficulty(recipe_to_edit.cooking_time, new_ingredients_list)
+                    session.query(Recipe).filter(Recipe.id == recipe_id).update({Recipe.ingredients: new_ingredients, Recipe.difficulty: new_difficulty})
+                    session.commit()
+                    print('Recipe has been updated')
+                elif choice == '3':
+                    new_cooking_time = int(input('Enter the new cooking time in minutes: '))
+                    new_difficulty = recipe_to_edit.calculate_difficulty(new_cooking_time, recipe_to_edit.ingredients.split(', '))
+                    session.query(Recipe).filter(Recipe.id == recipe_id).update({Recipe.cooking_time: new_cooking_time, Recipe.difficulty: new_difficulty})
+                    session.commit()
+                    print('Recipe has been updated')
+            else:
+                print('You need to enter a number from 1 to 3')
 
 # Main Menu function main_menu()
 def main_menu():
@@ -223,7 +224,12 @@ def main_menu():
 		elif choice == '5':
 			view_all_recipes()
 
+try:
+    main_menu()
+    print('Goodbye')
 
-main_menu()
-print('Goodbye')
-session.close()
+except Exception as e:
+    print('There was an error')
+
+finally:
+    session.close()
