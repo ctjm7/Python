@@ -63,7 +63,7 @@ def create_recipe():
 
     cooking_time = input('Enter the cooking time in minutes: ')
 
-    if cooking_time.isnumeric() == False:
+    while cooking_time.isnumeric() == False:
         cooking_time = input('Please enter a number for cooking time in minutes: ')
     else:
         cooking_time = int(cooking_time)
@@ -81,7 +81,7 @@ def create_recipe():
          name = name,
          cooking_time = cooking_time,
          ingredients = ingredients_str,
-         difficulty = None
+         difficulty = ''
 	)
 
     recipe_entry.calculate_difficulty(cooking_time, ingredients)
@@ -159,7 +159,7 @@ def edit_recipe():
         return None
     else:
         results = session.query(Recipe).with_entities(Recipe.id, Recipe.name).all()
-        print('-'*9)
+        print('\n' + '-'*10)
         recipe_id_list = []
         for result in results:
             print('Recipe ID: ' + str(result[0]) + ' ' + result[1])
@@ -175,7 +175,7 @@ def edit_recipe():
             print(recipe_to_edit)
 
             choice = input('Enter the number of the attribute you want to update\n1. name, 2. ingredients, 3. cooking time: ')
-            if choice.isnumeric() == True:
+            while choice.isnumeric() == True:
                 if choice == '1':
                     new_name = input('Enter the new name of the recipe: ')
                     session.query(Recipe).filter(Recipe.id == recipe_id).update({Recipe.name: new_name})
@@ -194,6 +194,8 @@ def edit_recipe():
                     session.query(Recipe).filter(Recipe.id == recipe_id).update({Recipe.cooking_time: new_cooking_time, Recipe.difficulty: new_difficulty})
                     session.commit()
                     print('Recipe has been updated')
+                else:
+                    choice = input('Please enter a number from 1 to 3: ')
             else:
                 print('You need to enter a number from 1 to 3')
 
@@ -223,6 +225,8 @@ def main_menu():
 			delete_recipe()
 		elif choice == '5':
 			view_all_recipes()
+		else:
+			print("Please enter a number from 1 to 5 or 'quit'")
 
 try:
     main_menu()
